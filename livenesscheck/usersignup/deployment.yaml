@@ -7,9 +7,12 @@ metadata:
 spec:  
   ports:  
     - name: http  
-      port: 8000  
+      port: 8080  
+      targetPort: 8080
+      nodePort: 30001
   selector:  
-    app: usersignup-service  
+    app: usersignup
+  type: NodePort  
 ---  
 
 apiVersion: apps/v1 
@@ -28,12 +31,18 @@ spec:
     spec:
       containers:
       - name: usersignupservice
-        image: usersignupservice:1.0
+        image: pratikdas/usersignuphc:v1
         ports:
         - containerPort: 8080
         livenessProbe:  
             httpGet:  
               path: /actuator/health/liveness  
-              port: 8000  
-            initialDelaySeconds: 5  
+              port: 8080  
+            initialDelaySeconds: 15  
             periodSeconds: 5
+        readinessProbe:  
+            httpGet:  
+              path: /actuator/health/readiness  
+              port: 8080  
+            initialDelaySeconds: 2
+            periodSeconds: 3   
