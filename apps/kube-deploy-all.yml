@@ -1,0 +1,133 @@
+---  # Pricing Service
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: pricing-depl
+spec:
+  selector:
+    matchLabels:
+      app: pricing
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: pricing
+        version: old
+    spec:
+      containers:
+      - name: pricingservice
+        image: pratikdas/pricing:v2
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8082
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: pricing-depl-new
+spec:
+  selector:
+    matchLabels:
+      app: pricing
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: pricing
+        version: new
+    spec:
+      containers:
+      - name: pricingservice
+        image: pratikdas/pricing:v2
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8082
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: inventory-depl
+spec:
+  selector:
+    matchLabels:
+      app: inventory
+  replicas: 2 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+      - name: inventoryservice
+        image: pratikdas/inventorysvc:v1
+        ports:
+        - containerPort: 8081
+---     
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: catalog-depl
+spec:
+  selector:
+    matchLabels:
+      app: catalog
+  replicas: 2 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: catalog
+    spec:
+      containers:
+      - name: catalogservice
+        image: pratikdas/catalogsvc:v1
+        ports:
+        - containerPort: 8080
+        env:
+        - name: api.pricingBaseURL
+          value: http://pricing-service:8082 
+        - name: api.inventoryBaseURL
+          value: http://inventory-service:8081   
+        - name: api.inventoryBaseURL1
+          value: http://inventory-service:8081       
+---  
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-service
+spec:
+  type: NodePort
+  selector:
+    app: catalog
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 30001
+---  
+apiVersion: v1
+kind: Service
+metadata:
+  name: pricing-service
+spec:
+  type: NodePort
+  selector:
+    app: pricing
+  ports:
+    - protocol: TCP
+      port: 8082
+      targetPort: 8082
+      nodePort: 30003    
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-service
+spec:
+  type: NodePort
+  selector:
+    app: inventory
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+      nodePort: 30002        
